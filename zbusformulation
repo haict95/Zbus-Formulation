@@ -1,0 +1,72 @@
+%Programming language: Matlab
+%Example: 10-bus system, power sources on bus 1 6 7 9 10
+%Line impedances from busf to bust
+%number of busses = size of Zbus (Zbus must be a square)
+
+
+%FORMULATING ZBUS
+%soucce impedance matrix
+zs = [0.001006+0.016521i;
+      0.00016441+0.0046618i;
+      0.0016382+0.024301i;
+      0.0014553+0.023504i;
+      0.00020591+0.004648i];
+  
+%bus with source  
+buss = [1;6;7;9;10];
+
+%bus without source
+bus1 = [2;3;4;5;8];
+
+%from bus..
+busf = [1;2;3;4;2;4;5;8;5;4];
+
+%to bus..
+bust = [2;3;4;2;7;5;8;10;6;9];
+
+%line impedance
+zline = [0.0008+0.012i;
+         0.0005+0.0076i;
+         0.0007+0.0109i;
+         0.0009+0.013i;
+         0.0007+0.0097i;
+         0.0004+0.0064i;
+         0.001+0.0142i;
+         0.001+0.0143i;
+         0.0014+0.0197i;
+         0.0004+0.0063i];
+         
+%initialize zbus
+zbus = zeros(10,10);
+
+%10by1 matrix for L
+L = zeros(10,1);
+
+%adding..
+%..power sources to node with source
+for n=1:length(buss)
+    zbus(buss(n),buss(n)) = zs(n);
+end
+
+%..impedance of 1.0 from node without source to ground
+for n=1:length(bus1)
+    zbus(bus1(n),bus1(n)) = 1;
+end
+
+%adding lines, each by each
+for n=1:length(busf) %or leng(bust)
+    for j=1:length(L)
+        L(j) = zbus(j,busf(n)) - zbus(j,bust(n)); %L
+    end
+    zrr = L(busf(n))-L(bust(n))+ zline(n); %Zrr
+    zbus = zbus - ((L*transpose(L))/zrr); %Zbus = Zbus - L*Lt/Zrr
+end
+
+%remove all 1.0 impedance from bus without source
+for n=1:length(bus1)
+    for j=1:length(L)
+        L(j) = zbus(j,bus1(n)); %L
+    end
+    zrr = zbus(bus1(n),bus1(n)) - 1; %Zrr
+    zbus = zbus - L*transpose(L)/zrr; %Zbus = Zbus - L*Lt/Zrr
+end
